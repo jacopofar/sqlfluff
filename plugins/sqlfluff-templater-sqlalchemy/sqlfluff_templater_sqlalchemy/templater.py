@@ -1,7 +1,5 @@
 """Defines the templaters."""
 
-import os
-import os.path
 import logging
 import re
 from typing import Dict, Optional, Tuple
@@ -21,13 +19,12 @@ from sqlfluff.core.templaters.base import RawTemplater
 templater_logger = logging.getLogger("sqlfluff.templater")
 
 # from https://github.com/sqlalchemy/sqlalchemy/blob/cf404d840c15fe167518dd884b295dc99ee26178/lib/sqlalchemy/sql/elements.py#L1756 # noqa
-BIND_PARAM_REGEX = re.compile(
-    r"(?<![:\w\x5c]):(?P<bind_param>\w+)(?!:)",
-    re.UNICODE
-)
+BIND_PARAM_REGEX = re.compile(r"(?<![:\w\x5c]):(?P<bind_param>\w+)(?!:)", re.UNICODE)
+
 
 class SqlalchemyTemplater(RawTemplater):
     """A templater for sqlalchemy."""
+
     name = "sqlalchemy"
 
     def __init__(self, override_context=None, **kwargs):
@@ -86,8 +83,8 @@ class SqlalchemyTemplater(RawTemplater):
 
         for found_param in BIND_PARAM_REGEX.finditer(in_str):
             span = found_param.span()
-            param_name = found_param['bind_param']
-            last_literal_length = (span[0] - last_pos_raw)
+            param_name = found_param["bind_param"]
+            last_literal_length = span[0] - last_pos_raw
             try:
                 replacement = context[param_name]
             except KeyError as err:
@@ -100,37 +97,39 @@ class SqlalchemyTemplater(RawTemplater):
             # add the literal to the slices
             template_slices.append(
                 TemplatedFileSlice(
-                    slice_type='literal',
+                    slice_type="literal",
                     source_slice=slice(last_pos_raw, span[0], None),
                     templated_slice=slice(
                         last_pos_templated,
                         last_pos_templated + last_literal_length,
-                        None),
-            ))
-            raw_slices.append(
-                RawFileSlice(
-                    raw=in_str[last_pos_raw: span[0]],
-                    slice_type='literal',
-                    source_idx=last_pos_raw
+                        None,
+                    ),
                 )
             )
-            out_str += in_str[last_pos_raw: span[0]]
+            raw_slices.append(
+                RawFileSlice(
+                    raw=in_str[last_pos_raw : span[0]],
+                    slice_type="literal",
+                    source_idx=last_pos_raw,
+                )
+            )
+            out_str += in_str[last_pos_raw : span[0]]
             # add the current replaced element
             start_teplate_pos = last_pos_templated + last_literal_length
             template_slices.append(
                 TemplatedFileSlice(
-                    slice_type='block_start',
+                    slice_type="block_start",
                     source_slice=slice(span[0], span[1], None),
                     templated_slice=slice(
-                        start_teplate_pos,
-                        start_teplate_pos + len(replacement),
-                        None),
-            ))
+                        start_teplate_pos, start_teplate_pos + len(replacement), None
+                    ),
+                )
+            )
             raw_slices.append(
                 RawFileSlice(
-                    raw=in_str[span[0]: span[1]],
-                    slice_type='block_start',
-                    source_idx=span[0]
+                    raw=in_str[span[0] : span[1]],
+                    slice_type="block_start",
+                    source_idx=span[0],
                 )
             )
             out_str += replacement
@@ -141,18 +140,20 @@ class SqlalchemyTemplater(RawTemplater):
         if len(in_str) > last_pos_raw:
             template_slices.append(
                 TemplatedFileSlice(
-                    slice_type='literal',
+                    slice_type="literal",
                     source_slice=slice(last_pos_raw, len(in_str), None),
                     templated_slice=slice(
                         last_pos_templated,
-                        last_pos_templated + (len(in_str) - last_pos_raw) ,
-                        None),
-            ))
+                        last_pos_templated + (len(in_str) - last_pos_raw),
+                        None,
+                    ),
+                )
+            )
             raw_slices.append(
                 RawFileSlice(
                     raw=in_str[last_pos_raw:],
-                    slice_type='literal',
-                    source_idx=last_pos_raw
+                    slice_type="literal",
+                    source_idx=last_pos_raw,
                 )
             )
             out_str += in_str[last_pos_raw:]
@@ -169,5 +170,5 @@ class SqlalchemyTemplater(RawTemplater):
                 # list of RawFileSlice, same size
                 raw_sliced=raw_slices,
             ),
-            [], # violations, always empty
+            [],  # violations, always empty
         )
